@@ -1,81 +1,64 @@
+// server.js
+
+require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const multer = require("multer");
-const { v2: cloudinary } = require("cloudinary");
-const dotenv = require("dotenv");
-const path = require("path");
+const Image = require("./models/Image"); // import schema
 
-dotenv.config();
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// ✅ MongoDB connection
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB connected"))
-  .catch(err => console.error("MongoDB connection error:", err));
+// Debug: confirm URI
+console.log("MONGO_URI:", process.env.MONGO_URI);
 
-// Schema for images
-const imageSchema = new mongoose.Schema({
-  folder: String,
-  url: String,
-});
-const Image = mongoose.model("Image", imageSchema);
+// Connect to MongoDB Atlas
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => console.log("MongoDB connected"))
+.catch(err => console.error("MongoDB connection error:", err));
 
-// ✅ Cloudinary config
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_API_KEY,
-  api_secret: process.env.CLOUD_API_SECRET,
-});
+// Middleware
+app.use(express.json());
 
-// ✅ Multer setup (temporary storage)
-const storage = multer.diskStorage({});
-const upload = multer({ storage });
-
-// ✅ EJS setup
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
-
-// Home page: list folders
-app.get("/", async (req, res) => {
-  const folders = await Image.distinct("folder");
-  res.render("index", { folders });
-});
-
-// Folder page: show images + upload form
-app.get("/folder/:name", async (req, res) => {
-  const folderName = req.params.name;
-  const images = await Image.find({ folder: folderName });
-  res.render("folder", { folderName, images });
-});
-
-// ✅ Upload route with error handling
-app.post("/upload/:folder", upload.single("image"), async (req, res) => {
-  const folderName = req.params.folder;
+// Upload route (dynamic folder + timestamp auto)
+app.post("/upload", async (req, res) => {
   try {
-    if (!req.file) {
-      return res.status(400).send("No file uploaded");
-    }
-
-    const result = await cloudinary.uploader.upload(req.file.path, {
-      folder: folderName,
-    });
-
-    if (!result || !result.secure_url) {
-      throw new Error("Cloudinary did not return a URL");
-    }
+    const { imageUrl, folderName } = req.body;
 
     const newImage = new Image({
+      url: imageUrl,
       folder: folderName,
-      url: result.secure_url,
     });
-    await newImage.save();
 
-    res.redirect(`/folder/${folderName}`);
+    await newImage.save();
+    res.json({ success: true, image: newImage });
   } catch (err) {
-    console.error("Upload error:", err);
-    res.status(500).send("Upload failed: " + err.message);
+    res.status(500).json({ error: err.message });
   }
 });
 
-// ✅ Start server
-app.listen(3000, () => console.log("Server running on http://localhost:3000"));
+// Fetch images by folder
+app.get("/images/:folderName", async (req, res) => {
+  try {
+    const images = await Image.find({ folder: req.params.folderName });
+    res.json(images.map(img => ({
+      url: img.url,
+      folder: img.folder,
+      uploadedAt: img.uploadedAt
+    })));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Root route
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

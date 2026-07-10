@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head><title><%= folderName %> Folder</title></head>
+<body>
+  <h1><%= folderName %> Folder</h1>
+  <form action="/upload/<%= folderName %>" method="post" enctype="multipart/form-data">
+    <input type="file" name="image" required>
+    <button type="submit">Upload</button>
+  </form>
+  <h2>Images</h2>
+  <ul>
+    <% images.forEach(img => { %>
+      <li><img src="<%= img.url %>" width="200"></li>
+    <% }) %>
+  </ul>
+</body>
+</html>

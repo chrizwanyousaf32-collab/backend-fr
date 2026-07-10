@@ -1,5 +1,28 @@
 {
+<<<<<<< HEAD
   "name": "image-gallery",
   "version": "0.1.0",
   "private": true
+=======
+  "name": "backend-fr",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cloudinary": "^2.10.0",
+    "dotenv": "^17.4.2",
+    "ejs": "^6.0.1",
+    "express": "^5.2.1",
+    "mongoose": "^9.7.4",
+    "multer": "^2.2.0"
+  }
+>>>>>>> 7689ad5c50e5259f71a22e108b54ff152c05ccad
 }

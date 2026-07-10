@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head><title>Choose Folder</title></head>
+<body>
+  <h1>Choose a Folder</h1>
+  <ul>
+    <% folders.forEach(f => { %>
+      <li><a href="/folder/<%= f %>"><%= f %></a></li>
+    <% }) %>
+  </ul>
+  <form action="/folder/family" method="get">
+    <button type="submit">Go to Family</button>
+  </form>
+  <form action="/folder/office" method="get">
+    <button type="submit">Go to Office</button>
+  </form>
+</body>
+</html>

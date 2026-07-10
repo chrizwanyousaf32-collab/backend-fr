@@ -3,7 +3,6 @@
 require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
-const Image = require("./models/Image"); // import schema
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,23 +10,27 @@ const PORT = process.env.PORT || 3000;
 // Debug: confirm URI
 console.log("MONGO_URI:", process.env.MONGO_URI);
 
-// ✅ New driver doesn’t need extra options
+// ✅ Connect to MongoDB (no deprecated options)
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB connected"))
   .catch(err => console.error("MongoDB connection error:", err));
 
 app.use(express.json());
 
-// Upload route (dynamic folder + timestamp auto)
+// ✅ Inline Image schema
+const imageSchema = new mongoose.Schema({
+  url: { type: String, required: true },       // Cloudinary URL
+  folder: { type: String, required: true },    // dynamic folder name
+  uploadedAt: { type: Date, default: Date.now } // auto timestamp
+});
+
+const Image = mongoose.model("Image", imageSchema);
+
+// Upload route
 app.post("/upload", async (req, res) => {
   try {
     const { imageUrl, folderName } = req.body;
-
-    const newImage = new Image({
-      url: imageUrl,
-      folder: folderName,
-    });
-
+    const newImage = new Image({ url: imageUrl, folder: folderName });
     await newImage.save();
     res.json({ success: true, image: newImage });
   } catch (err) {
